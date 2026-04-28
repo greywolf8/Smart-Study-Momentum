@@ -1,50 +1,154 @@
-# Welcome to your Expo app 👋
+# Smart Study Momentum :rocket:
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+An AI-driven mobile app that helps students maintain consistent learning habits and avoid burnout through intelligent study planning and personalized recommendations.
 
-## Get started
+## Features
 
-1. Install dependencies
+### Core Functionality
+- **AI-Powered Study Planning**: Generates adaptive daily study plans based on your patterns and deadlines
+- **Focus Sessions**: AI-generated micro-tasks with difficulty balancing across subjects
+- **Smart Reminders**: Contextual notifications based on productivity patterns
+- **Visual Progress Dashboards**: Comprehensive analytics and progress tracking
+- **Calendar Integration**: Sync with Google Calendar and detect upcoming deadlines
+- **Behavior Learning**: AI learns your study patterns and provides personalized recommendations
 
+### Key Screens
+- **Dashboard**: Overview of daily plan, progress metrics, and quick actions
+- **Study Plan**: AI-generated daily schedule with difficulty balancing
+- **Focus Session**: Timer-based study sessions with micro-tasks
+- **Progress**: Visual analytics with charts and insights
+- **Settings**: Preferences, integrations, and data management
+
+## Technology Stack
+
+- **Framework**: React Native + Expo
+- **Navigation**: Expo Router (file-based routing)
+- **UI Components**: React Native Paper
+- **Charts**: React Native Chart Kit
+- **Storage**: AsyncStorage
+- **Notifications**: Expo Notifications
+- **Calendar**: Expo Calendar
+- **Icons**: React Native Vector Icons
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+
+### Installation
+
+1. Clone the repository
+   ```bash
+   git clone <repository-url>
+   cd SmartStudyMomentum
+   ```
+
+2. Install dependencies
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. Start the development server
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+### Running the App
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Choose one of the following options:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- **Web**: Press `w` in the terminal or open http://localhost:8081
+- **iOS Simulator**: Press `i` in the terminal
+- **Android Emulator**: Press `a` in the terminal
+- **Expo Go**: Scan the QR code with the Expo Go app
 
-## Get a fresh project
+## App Structure
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+SmartStudyMomentum/
+|-- app/                    # Expo Router pages
+|   |-- (tabs)/            # Tab navigation screens
+|   |-- _layout.tsx        # Root layout
+|-- src/
+|   |-- components/        # Reusable components
+|   |-- screens/          # Main app screens
+|   |-- services/         # Business logic and APIs
+|   |-- types/            # TypeScript type definitions
+|   |-- utils/            # Utility functions
+|   |-- hooks/            # Custom React hooks
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Key Services
 
-## Learn more
+### AIStudyPlanner
+- Generates personalized study plans
+- Creates micro-tasks for focus sessions
+- Learns user behavior patterns
+- Provides recommendations
 
-To learn more about developing your project with Expo, look at the following resources:
+### NotificationService
+- Smart reminder scheduling
+- Session completion notifications
+- Streak achievements
+- Goal celebrations
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### CalendarIntegration
+- Syncs study sessions with device calendar
+- Detects conflicts and deadlines
+- Google Calendar integration (planned)
 
-## Join the community
+### StorageService
+- Persistent data management
+- User preferences
+- Study history
+- Progress metrics
 
-Join our community of developers creating universal apps.
+## Features in Detail
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Study Pattern Analysis
+- Tracks focus hours and session duration
+- Identifies productivity patterns
+- Suggests optimal study times
+- Balances difficulty across subjects
+
+### Focus Sessions
+- Timer-based study periods
+- AI-generated micro-tasks
+- Progress tracking
+- Completion rewards
+
+### Progress Analytics
+- Daily/weekly study time
+- Subject distribution charts
+- Difficulty balance visualization
+- Streak tracking
+- Productivity trends
+
+### Smart Reminders
+- Contextual timing based on patterns
+- Session start notifications
+- Break reminders
+- Deadline alerts
+- Motivational messages
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, please open an issue in the GitHub repository or contact the development team.
+
+---
+
+Built with :heart: using Expo and React Native

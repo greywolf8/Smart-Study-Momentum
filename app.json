@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.topiary_038.SmartStudyMomentum"
     },
     "web": {
       "output": "static",
@@ -43,6 +44,29 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "build": {
+      "developmentClient": {
+        "android": {
+          "buildType": "apk"
+        }
+      },
+      "preview": {
+        "android": {
+          "buildType": "apk"
+        }
+      },
+      "production": {
+        "android": {
+          "buildType": "apk"
+        }
+      }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "029d8e71-7455-4555-830f-366b31d2b54f"
+      }
     }
   }
 }
