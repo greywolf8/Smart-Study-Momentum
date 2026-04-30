@@ -1,5 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  User as FirebaseUser,
+  updateProfile
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
+import { ref, set, get } from 'firebase/database';
+import { database } from '../config/firebase';
 
 interface User {
   id: string;
@@ -35,50 +46,83 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
-    try {
-      const userToken = await AsyncStorage.getItem('userToken');
-      const userData = await AsyncStorage.getItem('userData');
-      
-      if (userToken && userData) {
-        setUser(JSON.parse(userData));
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        try {
+          const userRef = ref(database, `users/${firebaseUser.uid}`);
+          const snapshot = await get(userRef);
+          
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            setUser({
+              id: firebaseUser.uid,
+              name: userData.name || firebaseUser.displayName || '',
+              email: firebaseUser.email || '',
+            });
+          } else {
+            setUser({
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || '',
+              email: firebaseUser.email || '',
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUser({
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || '',
+            email: firebaseUser.email || '',
+          });
+        }
+      } else {
+        setUser(null);
       }
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-    } finally {
       setIsLoading(false);
-    }
-  };
+    });
+
+    return unsubscribe;
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
       
-      // For demo purposes, accept any valid email/password
-      if (email && password.length >= 6) {
-        const userData: User = {
-          id: Date.now().toString(),
-          name: email.split('@')[0],
-          email: email,
-        };
-        
-        await AsyncStorage.setItem('userToken', 'demo-token');
-        await AsyncStorage.setItem('userData', JSON.stringify(userData));
-        setUser(userData);
-        
-        return true;
+      const userRef = ref(database, `users/${firebaseUser.uid}`);
+      const snapshot = await get(userRef);
+      
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        setUser({
+          id: firebaseUser.uid,
+          name: userData.name || firebaseUser.displayName || '',
+          email: firebaseUser.email || '',
+        });
+      } else {
+        setUser({
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || '',
+          email: firebaseUser.email || '',
+        });
       }
       
-      return false;
-    } catch (error) {
+      return true;
+    } catch (error: any) {
       console.error('Login error:', error);
-      return false;
+      const errorCode = error.code;
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password.';
+      } else if (errorCode === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      } else if (errorCode === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password.';
+      }
+      
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -88,28 +132,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
       
-      // For demo purposes, accept any valid data
-      if (name && email && password.length >= 6) {
-        const userData: User = {
-          id: Date.now().toString(),
-          name: name,
-          email: email,
-        };
-        
-        await AsyncStorage.setItem('userToken', 'demo-token');
-        await AsyncStorage.setItem('userData', JSON.stringify(userData));
-        setUser(userData);
-        
-        return true;
+      await updateProfile(firebaseUser, { displayName: name });
+      
+      const userRef = ref(database, `users/${firebaseUser.uid}`);
+      await set(userRef, {
+        name: name,
+        email: email,
+        createdAt: new Date().toISOString(),
+      });
+      
+      setUser({
+        id: firebaseUser.uid,
+        name: name,
+        email: email,
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      const errorCode = error.code;
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (errorCode === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists.';
+      } else if (errorCode === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      } else if (errorCode === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please use a stronger password.';
       }
       
-      return false;
-    } catch (error) {
-      console.error('Signup error:', error);
-      return false;
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -117,24 +172,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      console.log('AuthContext: Starting logout process');
-      console.log('AuthContext: Current user state:', user);
-      
-      // Clear AsyncStorage first
-      console.log('AuthContext: Removing userToken from AsyncStorage');
-      await AsyncStorage.removeItem('userToken');
-      
-      console.log('AuthContext: Removing userData from AsyncStorage');
-      await AsyncStorage.removeItem('userData');
-      
-      // Update state to trigger navigation
-      console.log('AuthContext: Setting user to null');
+      await signOut(auth);
       setUser(null);
-      
-      console.log('AuthContext: Logout process completed');
     } catch (error) {
-      console.error('AuthContext: Logout error:', error);
-      // Even if there's an error, try to clear the user state
+      console.error('Logout error:', error);
       setUser(null);
     }
   };

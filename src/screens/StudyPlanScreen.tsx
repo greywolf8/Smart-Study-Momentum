@@ -21,7 +21,7 @@ const { width, height } = Dimensions.get('window');
 
 const StudyPlanScreen: React.FC = () => {
   const [currentPlan, setCurrentPlan] = useState<StudyPlan | null>(null);
-  const [subjects, setSubjects] = useState<string[]>(['Mathematics', 'Computer Science', 'Physics', 'English']);
+  const [subjects, setSubjects] = useState<string[]>([]);
   const [newSubject, setNewSubject] = useState('');
   const [availableTime, setAvailableTime] = useState(240);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -29,21 +29,25 @@ const StudyPlanScreen: React.FC = () => {
   const [editingSession, setEditingSession] = useState<StudySession | null>(null);
 
   useEffect(() => {
-    loadPlan();
+    loadData();
   }, []);
 
-  const loadPlan = async () => {
+  const loadData = async () => {
     try {
-      const plan = await StorageService.getCurrentPlan();
+      const [plan, loadedSubjects] = await Promise.all([
+        StorageService.getCurrentPlan(),
+        StorageService.getSubjects()
+      ]);
       setCurrentPlan(plan);
+      setSubjects(loadedSubjects);
     } catch (error) {
-      console.error('Error loading plan:', error);
+      console.error('Error loading data:', error);
     }
   };
 
   const generatePlan = async () => {
     try {
-      const plan = aiPlanner.generateDailyPlan(subjects, availableTime, []);
+      const plan = await aiPlanner.generateDailyPlan(subjects, availableTime, []);
       await StorageService.saveCurrentPlan(plan);
       setCurrentPlan(plan);
       Alert.alert('Success', 'New study plan generated successfully!');
@@ -53,16 +57,20 @@ const StudyPlanScreen: React.FC = () => {
     }
   };
 
-  const addSubject = () => {
+  const addSubject = async () => {
     if (newSubject.trim() && !subjects.includes(newSubject.trim())) {
-      setSubjects([...subjects, newSubject.trim()]);
+      const updatedSubjects = [...subjects, newSubject.trim()];
+      setSubjects(updatedSubjects);
       setNewSubject('');
+      await StorageService.saveSubjects(updatedSubjects);
     }
   };
 
-  const removeSubject = (subject: string) => {
+  const removeSubject = async (subject: string) => {
     if (subjects.length > 1) {
-      setSubjects(subjects.filter(s => s !== subject));
+      const updatedSubjects = subjects.filter(s => s !== subject);
+      setSubjects(updatedSubjects);
+      await StorageService.saveSubjects(updatedSubjects);
     }
   };
 
@@ -138,7 +146,7 @@ const StudyPlanScreen: React.FC = () => {
                 onSubmitEditing={addSubject}
               />
               <TouchableOpacity style={styles.addButton} onPress={addSubject}>
-                <Icon name="add" size={20} color="#6366f1" />
+                <Icon name="add" size={20} color="#ffffff" />
               </TouchableOpacity>
             </View>
             
@@ -329,7 +337,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
@@ -346,7 +354,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
@@ -391,7 +399,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sessionCard: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,

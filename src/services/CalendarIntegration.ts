@@ -2,6 +2,7 @@ import * as Calendar from 'expo-calendar';
 import { Platform } from 'react-native';
 import { StudySession, StudyPlan } from '../types';
 import { StorageService } from './StorageService';
+import { AppConfig } from '../constants/appConfig';
 
 export class CalendarIntegration {
   private static calendarId: string | null = null;
@@ -21,19 +22,19 @@ export class CalendarIntegration {
 
       const calendars = await Calendar.getCalendarsAsync();
       const existingCalendar = calendars.find(cal => 
-        cal.title === 'Smart Study Momentum' || cal.source.name === 'Smart Study Momentum'
+        cal.title === AppConfig.calendar.title || cal.source.name === AppConfig.calendar.title
       );
 
       if (existingCalendar) {
         this.calendarId = existingCalendar.id;
       } else {
         const newCalendar = await Calendar.createCalendarAsync({
-          title: 'Smart Study Momentum',
-          color: '#6366f1',
+          title: AppConfig.calendar.title,
+          color: AppConfig.calendar.color,
           entityType: Calendar.EntityTypes.EVENT,
           sourceId: calendars[0]?.source?.id,
           source: calendars[0]?.source,
-          name: 'Smart Study Momentum',
+          name: AppConfig.calendar.title,
           accessLevel: Calendar.CalendarAccessLevel.OWNER,
         });
         this.calendarId = newCalendar;
@@ -226,7 +227,7 @@ export class CalendarIntegration {
       const events = await Calendar.getEventsAsync(calendarIds, now, weekFromNow);
       
       // Filter for events that might be deadlines or assignments
-      const deadlineKeywords = ['deadline', 'due', 'assignment', 'test', 'exam', 'quiz'];
+      const deadlineKeywords = AppConfig.deadlineKeywords;
       
       return events
         .filter(event => {

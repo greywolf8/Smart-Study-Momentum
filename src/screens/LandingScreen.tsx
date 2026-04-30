@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   featureItem: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
     padding: 16,
     borderRadius: 16,
     width: width * 0.4,
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   getStartedButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 30,

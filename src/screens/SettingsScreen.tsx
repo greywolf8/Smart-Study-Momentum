@@ -13,6 +13,7 @@ import { Card, Button, List } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 import { Integration } from '../types';
 import { StorageService } from '../services/StorageService';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,9 +23,14 @@ const { width, height } = Dimensions.get('window');
 const SettingsScreen: React.FC = () => {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const appVersion = Constants.expoConfig?.version || '1.0.0';
+  const expoSdkVersion = Constants.expoConfig?.sdkVersion || 'Unknown';
   const [notifications, setNotifications] = useState(true);
   const [autoGeneratePlans, setAutoGeneratePlans] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [defaultSessionDuration, setDefaultSessionDuration] = useState(45);
+  const [focusDifficulty, setFocusDifficulty] = useState('balanced');
+  const [reminderFrequency, setReminderFrequency] = useState('daily');
   const [integrations, setIntegrations] = useState<Integration[]>([
     { id: 'google_calendar', type: 'google_calendar', isConnected: false, lastSync: new Date(), data: {} },
     { id: 'github', type: 'github', isConnected: false, lastSync: new Date(), data: {} },
@@ -40,10 +46,14 @@ const SettingsScreen: React.FC = () => {
       const notificationSetting = await StorageService.getSetting('notifications');
       const autoPlanSetting = await StorageService.getSetting('autoGeneratePlans');
       const darkModeSetting = await StorageService.getSetting('darkMode');
+      const studyPreferences = await StorageService.getStudyPreferences();
       
       setNotifications(notificationSetting !== false);
       setAutoGeneratePlans(autoPlanSetting !== false);
       setDarkMode(darkModeSetting === true);
+      setDefaultSessionDuration(studyPreferences.defaultSessionDuration || 45);
+      setFocusDifficulty(studyPreferences.focusDifficulty || 'balanced');
+      setReminderFrequency(studyPreferences.reminderFrequency || 'daily');
     } catch (error) {
       console.error('Error loading settings:', error);
     }
@@ -70,6 +80,21 @@ const SettingsScreen: React.FC = () => {
   const handleDarkModeToggle = async (value: boolean) => {
     setDarkMode(value);
     await saveSetting('darkMode', value);
+  };
+
+  const saveStudyPreferences = async () => {
+    try {
+      const preferences = {
+        defaultSessionDuration,
+        focusDifficulty,
+        reminderFrequency,
+      };
+      await StorageService.saveStudyPreferences(preferences);
+      Alert.alert('Success', 'Study preferences saved successfully!');
+    } catch (error) {
+      console.error('Error saving study preferences:', error);
+      Alert.alert('Error', 'Failed to save study preferences');
+    }
   };
 
   const handleIntegrationToggle = (integrationId: string) => {
@@ -301,7 +326,7 @@ const SettingsScreen: React.FC = () => {
             <Icon name="schedule" size={20} color="#f59e0b" />
             <View style={styles.preferenceContent}>
               <Text style={styles.preferenceTitle}>Default Session Duration</Text>
-              <Text style={styles.preferenceValue}>45 minutes</Text>
+              <Text style={styles.preferenceValue}>{defaultSessionDuration} minutes</Text>
             </View>
             <Icon name="chevron-right" size={20} color="#64748b" />
           </TouchableOpacity>
@@ -310,7 +335,7 @@ const SettingsScreen: React.FC = () => {
             <Icon name="psychology" size={20} color="#ef4444" />
             <View style={styles.preferenceContent}>
               <Text style={styles.preferenceTitle}>Focus Difficulty</Text>
-              <Text style={styles.preferenceValue}>Balanced</Text>
+              <Text style={styles.preferenceValue}>{focusDifficulty}</Text>
             </View>
             <Icon name="chevron-right" size={20} color="#64748b" />
           </TouchableOpacity>
@@ -319,9 +344,14 @@ const SettingsScreen: React.FC = () => {
             <Icon name="notifications-active" size={20} color="#8b5cf6" />
             <View style={styles.preferenceContent}>
               <Text style={styles.preferenceTitle}>Reminder Frequency</Text>
-              <Text style={styles.preferenceValue}>Daily</Text>
+              <Text style={styles.preferenceValue}>{reminderFrequency}</Text>
             </View>
             <Icon name="chevron-right" size={20} color="#64748b" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.saveButton} onPress={saveStudyPreferences}>
+            <Icon name="save" size={20} color="#ffffff" />
+            <Text style={styles.saveButtonText}>Save Preferences</Text>
           </TouchableOpacity>
         </Card.Content>
       </Card>
@@ -374,12 +404,12 @@ const SettingsScreen: React.FC = () => {
           
           <View style={styles.aboutItem}>
             <Text style={styles.aboutLabel}>Version</Text>
-            <Text style={styles.aboutValue}>1.0.0</Text>
+            <Text style={styles.aboutValue}>{appVersion}</Text>
           </View>
           
           <View style={styles.aboutItem}>
             <Text style={styles.aboutLabel}>Build</Text>
-            <Text style={styles.aboutValue}>Expo SDK 50</Text>
+            <Text style={styles.aboutValue}>Expo SDK {expoSdkVersion}</Text>
           </View>
           
           <TouchableOpacity style={styles.aboutItem}>
@@ -594,6 +624,22 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     marginLeft: 12,
     fontWeight: '500',
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#6366f1',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 

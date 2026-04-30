@@ -11,13 +11,16 @@ import {
 import { Card, Button, ProgressBar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { StudyPlan, ProgressMetrics, SmartReminder } from '../types';
 import { AIStudyPlanner } from '../services/AIStudyPlanner';
 import { StorageService } from '../services/StorageService';
+import { AppConfig } from '../constants/appConfig';
 
 const { width, height } = Dimensions.get('window');
 
 const DashboardScreen: React.FC = () => {
+  const router = useRouter();
   const [currentPlan, setCurrentPlan] = useState<StudyPlan | null>(null);
   const [progressMetrics, setProgressMetrics] = useState<ProgressMetrics | null>(null);
   const [reminders, setReminders] = useState<SmartReminder[]>([]);
@@ -30,7 +33,7 @@ const DashboardScreen: React.FC = () => {
   const loadData = async () => {
     try {
       const plan = await StorageService.getCurrentPlan();
-      const metrics = await StorageService.getProgressMetrics();
+      const metrics = await StorageService.calculateProgressMetrics();
       
       setCurrentPlan(plan);
       setProgressMetrics(metrics);
@@ -45,8 +48,10 @@ const DashboardScreen: React.FC = () => {
 
   const generateNewPlan = async () => {
     try {
-      const subjects = ['Mathematics', 'Computer Science', 'Physics', 'English'];
-      const plan = aiPlanner.generateDailyPlan(subjects, 240, []);
+      const subjects = await StorageService.getSubjects();
+      const preferences = await StorageService.getStudyPreferences();
+      const availableTime = preferences.defaultSessionDuration * 4; // 4 sessions
+      const plan = await aiPlanner.generateDailyPlan(subjects, availableTime, []);
       await StorageService.saveCurrentPlan(plan);
       setCurrentPlan(plan);
     } catch (error) {
@@ -54,10 +59,11 @@ const DashboardScreen: React.FC = () => {
     }
   };
 
-  const startFocusSession = (subject: string) => {
+  const startFocusSession = async (subject: string) => {
+    const preferences = await StorageService.getStudyPreferences();
     Alert.alert(
       'Start Focus Session',
-      `Start a 45-minute focus session for ${subject}?`,
+      `Start a ${preferences.defaultSessionDuration}-minute focus session for ${subject}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Start', onPress: () => handleStartSession(subject) },
@@ -66,8 +72,8 @@ const DashboardScreen: React.FC = () => {
   };
 
   const handleStartSession = (subject: string) => {
-    // This would navigate to the focus session screen
-    console.log(`Starting focus session for ${subject}`);
+    // Navigate to focus session screen
+    router.push('/(tabs)/focus');
   };
 
   const getMotivationalMessage = () => {
@@ -189,19 +195,19 @@ const DashboardScreen: React.FC = () => {
               </View>
               <Text style={styles.actionText}>Quick Study</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(tabs)/progress')}>
               <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
                 <Icon name="assessment" size={28} color="#10b981" />
               </View>
               <Text style={styles.actionText}>Review Progress</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(tabs)/study-plan')}>
               <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
                 <Icon name="schedule" size={28} color="#f59e0b" />
               </View>
               <Text style={styles.actionText}>Schedule</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(tabs)/settings')}>
               <View style={[styles.actionIconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
                 <Icon name="lightbulb" size={28} color="#8b5cf6" />
               </View>
@@ -308,7 +314,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   sessionItem: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     padding: 16,
     marginBottom: 12,
     borderRadius: 12,
@@ -385,7 +391,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     width: '48%',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

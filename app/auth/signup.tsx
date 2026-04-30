@@ -95,12 +95,10 @@ const SignupScreen: React.FC = () => {
             },
           ]
         );
-      } else {
-        Alert.alert('Error', 'Failed to create account. Please check your information and try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -283,7 +281,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   input: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
   },
   signupButton: {
     backgroundColor: '#6366f1',

@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { SmartReminder } from '../types';
 import { StorageService } from './StorageService';
+import { AppConfig } from '../constants/appConfig';
 
 export class NotificationService {
   static async initialize(): Promise<void> {
@@ -124,52 +125,52 @@ export class NotificationService {
   private static generateSmartReminders(now: Date): SmartReminder[] {
     const reminders: SmartReminder[] = [];
     const currentHour = now.getHours();
+    const dayOfWeek = now.getDay();
 
     // Morning motivation reminder
-    if (currentHour >= 7 && currentHour <= 9) {
+    if (currentHour >= AppConfig.reminderTimes.morning.start && currentHour <= AppConfig.reminderTimes.morning.end) {
       reminders.push({
         id: `morning_${Date.now()}`,
-        title: 'Good Morning! Time to Study',
-        message: 'Start your day with a productive study session. You\'ve got this!',
-        scheduledTime: new Date(now.getTime() + 30 * 60000), // 30 minutes from now
+        title: AppConfig.reminderMessages.morning.title,
+        message: AppConfig.reminderMessages.morning.message,
+        scheduledTime: new Date(now.getTime() + AppConfig.reminderTimes.morning.offsetMinutes * 60000),
         type: 'study',
         priority: 'medium',
       });
     }
 
     // Afternoon focus reminder
-    if (currentHour >= 13 && currentHour <= 15) {
+    if (currentHour >= AppConfig.reminderTimes.afternoon.start && currentHour <= AppConfig.reminderTimes.afternoon.end) {
       reminders.push({
         id: `afternoon_${Date.now()}`,
-        title: 'Afternoon Focus Session',
-        message: 'Beat the afternoon slump with a focused study session!',
-        scheduledTime: new Date(now.getTime() + 15 * 60000), // 15 minutes from now
+        title: AppConfig.reminderMessages.afternoon.title,
+        message: AppConfig.reminderMessages.afternoon.message,
+        scheduledTime: new Date(now.getTime() + AppConfig.reminderTimes.afternoon.offsetMinutes * 60000),
         type: 'study',
         priority: 'medium',
       });
     }
 
     // Evening review reminder
-    if (currentHour >= 19 && currentHour <= 21) {
+    if (currentHour >= AppConfig.reminderTimes.evening.start && currentHour <= AppConfig.reminderTimes.evening.end) {
       reminders.push({
         id: `evening_${Date.now()}`,
-        title: 'Evening Review',
-        message: 'Review today\'s learning progress and plan for tomorrow.',
-        scheduledTime: new Date(now.getTime() + 20 * 60000), // 20 minutes from now
+        title: AppConfig.reminderMessages.evening.title,
+        message: AppConfig.reminderMessages.evening.message,
+        scheduledTime: new Date(now.getTime() + AppConfig.reminderTimes.evening.offsetMinutes * 60000),
         type: 'review',
         priority: 'low',
       });
     }
 
     // Weekend motivation
-    const dayOfWeek = now.getDay();
     if (dayOfWeek === 6 || dayOfWeek === 0) { // Saturday or Sunday
-      if (currentHour >= 10 && currentHour <= 11) {
+      if (currentHour >= AppConfig.reminderTimes.weekend.start && currentHour <= AppConfig.reminderTimes.weekend.end) {
         reminders.push({
           id: `weekend_${Date.now()}`,
-          title: 'Weekend Study Power!',
-          message: 'Use the weekend to get ahead with your studies!',
-          scheduledTime: new Date(now.getTime() + 60 * 60000), // 1 hour from now
+          title: AppConfig.reminderMessages.weekend.title,
+          message: AppConfig.reminderMessages.weekend.message,
+          scheduledTime: new Date(now.getTime() + AppConfig.reminderTimes.weekend.offsetMinutes * 60000),
           type: 'study',
           priority: 'low',
         });

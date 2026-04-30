@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { StorageService } from '../services/StorageService';
 
 const AuthWrapper: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -13,6 +14,8 @@ const AuthWrapper: React.FC = () => {
     console.log('AuthWrapper: Effect triggered', { isLoading, isAuthenticated, user: !!user });
     if (!isLoading) {
       if (isAuthenticated && user) {
+        // Initialize default data before navigating
+        StorageService.initializeDefaultData();
         // User is authenticated, redirect to dashboard
         console.log('AuthWrapper: User is authenticated, navigating to tabs');
         router.replace('/(tabs)');

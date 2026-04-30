@@ -11,12 +11,14 @@ import { Card, Button } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { ProgressMetrics, StudySession } from '../types';
 import { StorageService } from '../services/StorageService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 const ProgressScreen: React.FC = () => {
+  const router = useRouter();
   const [progressMetrics, setProgressMetrics] = useState<ProgressMetrics | null>(null);
   const [studyHistory, setStudyHistory] = useState<StudySession[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'all'>('week');
@@ -27,7 +29,7 @@ const ProgressScreen: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const metrics = await StorageService.getProgressMetrics();
+      const metrics = await StorageService.calculateProgressMetrics();
       const history = await StorageService.getStudyHistory();
       
       setProgressMetrics(metrics);
@@ -149,9 +151,9 @@ const ProgressScreen: React.FC = () => {
   };
 
   const chartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    backgroundGradientFrom: 'rgba(139, 92, 246, 0.1)',
+    backgroundGradientTo: 'rgba(139, 92, 246, 0.1)',
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(99, 102, 241, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(71, 85, 105, ${opacity})`,
@@ -184,7 +186,7 @@ const ProgressScreen: React.FC = () => {
           <Card style={styles.card}>
             <Card.Content>
               <Text style={styles.noDataText}>No progress data yet. Start studying to see your analytics!</Text>
-              <TouchableOpacity style={styles.startButton}>
+              <TouchableOpacity style={styles.startButton} onPress={() => router.push('/(tabs)/focus')}>
                 <Icon name="play-arrow" size={20} color="#ffffff" />
                 <Text style={styles.startButtonText}>Start First Session</Text>
               </TouchableOpacity>

@@ -65,11 +65,9 @@ const LoginScreen: React.FC = () => {
             },
           ]
         );
-      } else {
-        Alert.alert('Error', 'Invalid email or password. Please try again.');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -253,7 +251,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   input: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
   },
   optionsContainer: {
     flexDirection: 'row',

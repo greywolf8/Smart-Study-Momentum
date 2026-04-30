@@ -12,9 +12,10 @@ import {
 import { Card, Button, ProgressBar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FocusSession, MicroTask } from '../types';
+import { FocusSession, MicroTask, StudySession } from '../types';
 import { AIStudyPlanner } from '../services/AIStudyPlanner';
 import { StorageService } from '../services/StorageService';
+import { AppConfig } from '../constants/appConfig';
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,10 +24,25 @@ const FocusSessionScreen: React.FC = () => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [aiPlanner] = useState(() => new AIStudyPlanner());
+  const [recentSessions, setRecentSessions] = useState<StudySession[]>([]);
   
   const progressAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    loadRecentSessions();
+  }, []);
+
+  const loadRecentSessions = async () => {
+    try {
+      const history = await StorageService.getStudyHistory();
+      const recent = history.slice(-5).reverse();
+      setRecentSessions(recent);
+    } catch (error) {
+      console.error('Error loading recent sessions:', error);
+    }
+  };
 
   useEffect(() => {
     if (currentSession && !isPaused) {
@@ -67,11 +83,16 @@ const FocusSessionScreen: React.FC = () => {
     }
   }, [elapsedTime, currentSession]);
 
-  const startNewSession = (subject: string, duration: number) => {
-    const session = aiPlanner.createFocusSession(subject, duration);
-    setCurrentSession(session);
-    setElapsedTime(0);
-    setIsPaused(false);
+  const startNewSession = async (subject: string, duration: number) => {
+    try {
+      const session = await aiPlanner.createFocusSession(subject, duration);
+      setCurrentSession(session);
+      setElapsedTime(0);
+      setIsPaused(false);
+    } catch (error) {
+      console.error('Error creating focus session:', error);
+      Alert.alert('Error', 'Failed to create focus session');
+    }
   };
 
   const pauseSession = () => {
@@ -112,6 +133,7 @@ const FocusSessionScreen: React.FC = () => {
         
         await StorageService.saveStudySession(studySession);
         aiPlanner.updateUserBehavior(studySession);
+        loadRecentSessions(); // Reload recent sessions
       } catch (error) {
         console.error('Error saving session:', error);
       }
@@ -155,13 +177,7 @@ const FocusSessionScreen: React.FC = () => {
   };
 
   const getMotivationalQuote = () => {
-    const quotes = [
-      "Focus on being productive instead of busy.",
-      "The secret to getting ahead is getting started.",
-      "Success is the sum of small efforts repeated day in and day out.",
-      "Don't watch the clock; do what it does. Keep going.",
-    ];
-    return quotes[Math.floor(Math.random() * quotes.length)];
+    return AppConfig.focusQuotes[Math.floor(Math.random() * AppConfig.focusQuotes.length)];
   };
 
   if (!currentSession) {
@@ -186,49 +202,19 @@ const FocusSessionScreen: React.FC = () => {
                 <Text style={styles.sectionTitle}>Start a New Session</Text>
                 
                 <View style={styles.quickStartGrid}>
-                  <TouchableOpacity 
-                    style={styles.quickStartButton}
-                    onPress={() => startNewSession('Quick Study', 25)}
-                  >
-                    <View style={[styles.iconContainer, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
-                      <Icon name="bolt" size={28} color="#6366f1" />
-                    </View>
-                    <Text style={styles.quickStartText}>Quick Focus</Text>
-                    <Text style={styles.quickStartSubtext}>25 minutes</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.quickStartButton}
-                    onPress={() => startNewSession('Deep Work', 45)}
-                  >
-                    <View style={[styles.iconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
-                      <Icon name="psychology" size={28} color="#8b5cf6" />
-                    </View>
-                    <Text style={styles.quickStartText}>Deep Work</Text>
-                    <Text style={styles.quickStartSubtext}>45 minutes</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.quickStartButton}
-                    onPress={() => startNewSession('Review Session', 30)}
-                  >
-                    <View style={[styles.iconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-                      <Icon name="replay" size={28} color="#10b981" />
-                    </View>
-                    <Text style={styles.quickStartText}>Review</Text>
-                    <Text style={styles.quickStartSubtext}>30 minutes</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.quickStartButton}
-                    onPress={() => startNewSession('Practice', 60)}
-                  >
-                    <View style={[styles.iconContainer, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
-                      <Icon name="fitness-center" size={28} color="#f59e0b" />
-                    </View>
-                    <Text style={styles.quickStartText}>Practice</Text>
-                    <Text style={styles.quickStartSubtext}>60 minutes</Text>
-                  </TouchableOpacity>
+                  {AppConfig.focusSessionPresets.map((preset, index) => (
+                    <TouchableOpacity 
+                      key={index}
+                      style={styles.quickStartButton}
+                      onPress={() => startNewSession(preset.name, preset.duration)}
+                    >
+                      <View style={[styles.iconContainer, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                        <Icon name={preset.icon} size={28} color="#6366f1" />
+                      </View>
+                      <Text style={styles.quickStartText}>{preset.name}</Text>
+                      <Text style={styles.quickStartSubtext}>{preset.duration} minutes</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </Card.Content>
             </Card>
@@ -236,7 +222,30 @@ const FocusSessionScreen: React.FC = () => {
             <Card style={styles.card}>
               <Card.Content>
                 <Text style={styles.sectionTitle}>Recent Sessions</Text>
-                <Text style={styles.noSessionsText}>No recent sessions. Start your first focus session!</Text>
+                {recentSessions.length === 0 ? (
+                  <Text style={styles.noSessionsText}>No recent sessions. Start your first focus session!</Text>
+                ) : (
+                  recentSessions.map(session => (
+                    <View key={session.id} style={styles.recentSessionItem}>
+                      <View style={styles.recentSessionLeft}>
+                        <Icon name="history" size={20} color="#6366f1" />
+                        <View style={styles.recentSessionInfo}>
+                          <Text style={styles.recentSessionSubject}>{session.subject}</Text>
+                          <Text style={styles.recentSessionDate}>
+                            {new Date(session.startTime).toLocaleDateString()} · {session.duration} min
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={[
+                        styles.difficultyBadge,
+                        { backgroundColor: session.difficulty === 'easy' ? '#4ade80' : 
+                                          session.difficulty === 'medium' ? '#fbbf24' : '#f87171' }
+                      ]}>
+                        <Text style={styles.difficultyText}>{session.difficulty}</Text>
+                      </View>
+                    </View>
+                  ))
+                )}
               </Card.Content>
             </Card>
           </View>
@@ -421,7 +430,7 @@ const styles = StyleSheet.create({
   },
   quickStartButton: {
     width: '48%',
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
@@ -495,7 +504,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
@@ -534,6 +543,46 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  recentSessionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  recentSessionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  recentSessionInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  recentSessionSubject: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  recentSessionDate: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  difficultyBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  difficultyText: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 
